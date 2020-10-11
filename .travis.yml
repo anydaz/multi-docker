@@ -1,0 +1,25 @@
+language: generic
+sudo: required
+services: 
+  - docker
+
+before_install:
+  - docker build -t andydaz/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true andydaz/react-test npm run test
+
+after_success:
+  - docker build -t andydaz/multi-client ./client
+  - docker build -t andydaz/multi-nginx ./nginx
+  - docker build -t andydaz/multi-server ./server
+  - docker build -t andydaz/multi-worker ./worker
+
+  # login
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin 
+
+  # push to docker hub
+  - docker push andydaz/multi-client
+  - docker push andydaz/multi-nginx
+  - docker push andydaz/multi-server
+  - docker push andydaz/multi-worker
